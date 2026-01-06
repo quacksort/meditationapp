@@ -18,6 +18,9 @@ const App: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [toast, setToast] = useState<{message: string, type: 'success' | 'info'} | null>(null);
   const [triggeredAlarm, setTriggeredAlarm] = useState<Reminder | null>(null);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    'Notification' in window ? Notification.permission : 'denied'
+  );
   
   const lastCheckedMinute = useRef<string>('');
 
@@ -25,9 +28,14 @@ const App: React.FC = () => {
     setConfigs(storage.getConfigs());
     setSessions(storage.getSessions());
     setReminders(storage.getReminders());
+  }, []);
 
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+  const handleRequestPermission = useCallback(async () => {
+    if (!('Notification' in window)) return;
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+    if (permission === 'granted') {
+      showToast('Notifications enabled! 🔔', 'success');
     }
   }, []);
 
@@ -49,17 +57,17 @@ const App: React.FC = () => {
       activeAlarms.forEach(alarm => {
         const config = configs.find(c => c.id === alarm.configId);
         if (config) {
-          // Real PWA Push Notification
+          // Real PWA Push Notification (requires SW)
           if ('serviceWorker' in navigator && Notification.permission === 'granted') {
             navigator.serviceWorker.ready.then(registration => {
-              // Added type assertion to bypass strict NotificationOptions check for 'vibrate'
-              registration.showNotification('ZenInterval', {
-                body: `Time for your ${config.name} session!`,
+              registration.showNotification('ZenInterval Meditation', {
+                body: `Time for your "${config.name}" session`,
                 icon: 'https://cdn-icons-png.flaticon.com/512/2913/2913520.png',
                 vibrate: [200, 100, 200],
                 badge: 'https://cdn-icons-png.flaticon.com/512/2913/2913520.png',
                 tag: 'meditation-reminder',
-                renotify: true
+                renotify: true,
+                requireInteraction: true
               } as any);
             });
           }
@@ -209,6 +217,8 @@ const App: React.FC = () => {
             onSave={handleSaveReminder}
             onDelete={handleDeleteReminder}
             onToggle={handleToggleReminder}
+            permissionStatus={notificationPermission}
+            onRequestPermission={handleRequestPermission}
           />
         )}
       </div>

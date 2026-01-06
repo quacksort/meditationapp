@@ -12,21 +12,22 @@ if (!rootElement) {
 // Register Service Worker for PWA features
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Using './sw.js' ensures the browser treats it as relative to the current directory/origin
-    navigator.serviceWorker.register('./sw.js').then(reg => {
-      console.log('SW registered:', reg.scope);
-    }).catch(err => {
-      console.error('SW registration failed:', err);
-    });
+    // Standard relative path for SW registration in sandboxed environments
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => {
+        console.log('ZenInterval: Service Worker registered', reg.scope);
+      })
+      .catch(err => {
+        console.error('ZenInterval: SW registration failed', err);
+      });
   });
 }
 
 // Global click listener to unlock audio capability in the browser
 const unlockAudio = () => {
   audioService.init();
-  document.removeEventListener('click', unlockAudio);
-  document.removeEventListener('touchstart', unlockAudio);
 };
+
 document.addEventListener('click', unlockAudio, { once: true });
 document.addEventListener('touchstart', unlockAudio, { once: true });
 

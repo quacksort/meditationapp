@@ -8,9 +8,19 @@ interface AlarmManagerProps {
   onSave: (reminder: Reminder) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string) => void;
+  permissionStatus: NotificationPermission;
+  onRequestPermission: () => void;
 }
 
-const AlarmManager: React.FC<AlarmManagerProps> = ({ reminders, configs, onSave, onDelete, onToggle }) => {
+const AlarmManager: React.FC<AlarmManagerProps> = ({ 
+  reminders, 
+  configs, 
+  onSave, 
+  onDelete, 
+  onToggle,
+  permissionStatus,
+  onRequestPermission
+}) => {
   const [showForm, setShowForm] = useState(false);
   const [editingAlarm, setEditingAlarm] = useState<Reminder | null>(null);
 
@@ -23,8 +33,8 @@ const AlarmManager: React.FC<AlarmManagerProps> = ({ reminders, configs, onSave,
     <div className="space-y-6 pb-24">
       <header className="flex justify-between items-center px-1">
         <div>
-          <h2 className="text-3xl font-black text-[#1A1C1E]">Mindfulness Alarms</h2>
-          <p className="text-gray-500 font-medium">Keep your practice consistent</p>
+          <h2 className="text-3xl font-black text-[#1A1C1E]">Alarms</h2>
+          <p className="text-gray-500 font-medium">Practice consistency</p>
         </div>
         <button
           onClick={() => handleOpenForm()}
@@ -36,10 +46,29 @@ const AlarmManager: React.FC<AlarmManagerProps> = ({ reminders, configs, onSave,
         </button>
       </header>
 
+      {/* Permission Banner */}
+      {permissionStatus !== 'granted' && (
+        <div className="bg-[#D3E4FF] p-5 rounded-[24px] border border-[#005AC1]/10 animate-in fade-in slide-in-from-top-2 duration-500">
+          <div className="flex items-start space-x-4">
+            <div className="text-2xl">🔔</div>
+            <div className="flex-1">
+              <h4 className="font-black text-[#001D36]">Enable Notifications</h4>
+              <p className="text-sm text-[#001D36]/70 mb-3">ZenInterval needs your permission to send alarms while the app is in the background.</p>
+              <button
+                onClick={onRequestPermission}
+                className="bg-[#005AC1] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition-all"
+              >
+                Allow Notifications
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {reminders.length === 0 && !showForm && (
         <div className="material-card bg-white p-10 text-center space-y-4 border border-dashed border-gray-200">
-          <div className="text-5xl opacity-30">🔔</div>
-          <p className="text-gray-400 font-medium">No alarms set yet.<br/>Create one to stay on track.</p>
+          <div className="text-5xl opacity-30">🧘‍♂️</div>
+          <p className="text-gray-400 font-medium">Create your first reminder<br/>to stay mindful.</p>
         </div>
       )}
 
