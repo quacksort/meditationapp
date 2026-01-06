@@ -6,28 +6,28 @@ const urlsToCache = [
   '/',
   '/index.html',
   // Add other assets like your main JS bundle, CSS, and images here
-  // Note: Vite generates hashed assets, so you might need a more dynamic approach
-  // or just cache the essential shell and let the network fetch the rest.
 ];
 
 self.addEventListener('install', (event) => {
+  console.log('SW: install event');
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Opened cache');
+      console.log('SW: Opened cache');
       return cache.addAll(urlsToCache).catch(err => {
-        console.error('Failed to cache:', err);
+        console.error('SW: Failed to cache on install:', err);
       });
     })
   );
 });
 
 self.addEventListener('activate', (event) => {
+  console.log('SW: activate event');
   event.waitUntil(
     clients.claim().then(() => {
-      // After activating, re-schedule alarms from storage
-      // This ensures alarms persist even if the browser was closed
-      return scheduleAlarmsFromStorage();
+      console.log('SW: clients claimed.');
+      // NOTE: Re-scheduling on activation would be done here,
+      // but we first need to solve the notification display issue.
     })
   );
 });
@@ -40,7 +40,20 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Listener for test push messages from DevTools
+self.addEventListener('push', (event) => {
+    console.log('SW: Push event received');
+    const title = 'Test Push Notification';
+    const options = {
+        body: event.data ? event.data.text() : 'You sent a test push message!',
+        icon: 'https://cdn-icons-png.flaticon.com/512/2913/2913520.png',
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+
 self.addEventListener('notificationclick', (event) => {
+  console.log('SW: notificationclick event');
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
@@ -62,22 +75,16 @@ self.addEventListener('notificationclick', (event) => {
 
 let scheduledTimeouts = {};
 
-// We need a way to get reminders. Since SW can't access localStorage,
-// we'll use IndexedDB. For simplicity, we'll mimic an async storage getter.
-// This part will need to be properly implemented with IndexedDB later.
 function getRemindersFromStorage() {
-  // This is a placeholder. In a real app, you would use IndexedDB
-  // to allow the service worker to access data saved by the app.
-  // For now, we rely on the app to message us the alarms.
-  // When the SW activates, it will ask the app for the alarms.
   return new Promise((resolve) => {
-    // Let's ask the client for the data
      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
         if(clientList.length > 0) {
+            console.log('SW: Requesting reminders from client');
             clientList[0].postMessage({ type: 'GET_REMINDERS' });
+        } else {
+            console.log('SW: No clients found to request reminders from.');
         }
      });
-     // We will get the reminders via a 'SET_REMINDERS' message
      resolve([]); 
   });
 }
@@ -86,33 +93,30 @@ function scheduleNotification(alarm, config) {
   const now = new Date();
   const [hours, minutes] = alarm.time.split(':').map(Number);
   
-  // Calculate the next occurrence of the alarm
   let nextAlarmTime = new Date();
   nextAlarmTime.setHours(hours, minutes, 0, 0);
 
-  // If the time is in the past for today, schedule it for tomorrow
   if (nextAlarmTime <= now) {
     nextAlarmTime.setDate(nextAlarmTime.getDate() + 1);
   }
   
-  // Basic weekday check - this simplified logic assumes we check daily
   const dayOfWeek = nextAlarmTime.getDay();
   if (alarm.days.length > 0 && !alarm.days.includes(dayOfWeek)) {
-     // If today is not a valid day, let's reschedule for the next valid day
-     // This logic can be complex, for now we will just check tomorrow
+     console.log(`SW: Alarm "${config.name}" (${alarm.id}) skipped, not scheduled for today.`);
      return;
   }
 
   const delay = nextAlarmTime.getTime() - now.getTime();
 
   if (delay > 0) {
-    console.log(`Scheduling notification for "${config.name}" in ${Math.round(delay / 1000)}s`);
-    // Clear any existing timeout for this alarm to avoid duplicates
+    console.log(`SW: Scheduling notification for "${config.name}" (${alarm.id}) with a delay of ${Math.round(delay / 1000)}s.`);
+    
     if (scheduledTimeouts[alarm.id]) {
       clearTimeout(scheduledTimeouts[alarm.id]);
     }
     
     scheduledTimeouts[alarm.id] = setTimeout(() => {
+      console.log(`SW: FIRING NOTIFICATION for "${config.name}" (${alarm.id})`);
       self.registration.showNotification('ZenInterval Meditation', {
         body: `Time for your "${config.name}" session`,
         icon: 'https://cdn-icons-png.flaticon.com/512/2913/2913520.png',
@@ -122,34 +126,42 @@ function scheduleNotification(alarm, config) {
         renotify: true,
         requireInteraction: true,
       });
-      // Re-schedule for the next day/week
-      scheduleNotification(alarm, config);
+      // This simple reschedule might not be robust enough for all cases, but it's a start
+      // scheduleNotification(alarm, config);
     }, delay);
+  } else {
+    console.log(`SW: Alarm "${config.name}" (${alarm.id}) has a non-positive delay (${delay}ms), not scheduling.`);
   }
 }
 
 function scheduleAlarms(reminders, configs) {
-    // Clear all existing timeouts before rescheduling
+    console.log('SW: scheduleAlarms called with', { reminders, configs });
     for (const id in scheduledTimeouts) {
         clearTimeout(scheduledTimeouts[id]);
         delete scheduledTimeouts[id];
     }
+    console.log('SW: Cleared all previous scheduled timeouts.');
     
-    const remindersMap = new Map(reminders.map(r => [r.id, r]));
     const configsMap = new Map(configs.map(c => [c.id, c]));
 
     reminders.forEach(alarm => {
         if (alarm.enabled) {
             const config = configsMap.get(alarm.configId);
             if(config) {
+                console.log(`SW: Processing enabled alarm: "${config.name}" (${alarm.id})`);
                 scheduleNotification(alarm, config);
+            } else {
+                console.log(`SW: Could not find config with id ${alarm.configId}`);
             }
+        } else {
+            console.log(`SW: Skipping disabled alarm ${alarm.id}`);
         }
     });
 }
 
 
 self.addEventListener('message', (event) => {
+    console.log('SW: Message received:', event.data);
     if (event.data && event.data.type === 'SCHEDULE_ALARMS') {
         const { reminders, configs } = event.data.payload;
         scheduleAlarms(reminders, configs);
