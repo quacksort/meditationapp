@@ -24,11 +24,43 @@ const App: React.FC = () => {
   
   const lastCheckedMinute = useRef<string>('');
 
+  // Function to send data to the service worker
+  const sendAlarmsToServiceWorker = useCallback(() => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SCHEDULE_ALARMS',
+        payload: {
+          reminders: storage.getReminders(), // Send fresh data
+          configs: storage.getConfigs(),
+        }
+      });
+    }
+  }, []);
+
   useEffect(() => {
     setConfigs(storage.getConfigs());
     setSessions(storage.getSessions());
     setReminders(storage.getReminders());
-  }, []);
+
+    // Initial scheduling attempt when app loads
+    navigator.serviceWorker.ready.then(registration => {
+      // Small delay to ensure the SW is ready to receive messages
+      setTimeout(sendAlarmsToServiceWorker, 1000); 
+    });
+
+    // Listen for requests from the SW
+    const handleSWMessage = (event: MessageEvent) => {
+        if (event.data && event.data.type === 'GET_REMINDERS') {
+            sendAlarmsToServiceWorker();
+        }
+    };
+    navigator.serviceWorker.addEventListener('message', handleSWMessage);
+
+    return () => {
+        navigator.serviceWorker.removeEventListener('message', handleSWMessage);
+    };
+  }, [sendAlarmsToServiceWorker]);
+
 
   const handleRequestPermission = useCallback(async () => {
     if (!('Notification' in window)) return;
@@ -36,11 +68,14 @@ const App: React.FC = () => {
     setNotificationPermission(permission);
     if (permission === 'granted') {
       showToast('Notifications enabled! 🔔', 'success');
+      // After permission is granted, immediately schedule alarms
+      sendAlarmsToServiceWorker();
     }
-  }, []);
+  }, [sendAlarmsToServiceWorker]);
 
+  // This effect checks for alarms to show an IN-APP notification if the app is open.
   useEffect(() => {
-    const checkAlarms = () => {
+    const checkAlarmsInApp = () => {
       const now = new Date();
       const currentMinute = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
       const currentDay = now.getDay();
@@ -53,32 +88,18 @@ const App: React.FC = () => {
         r.time === currentMinute && 
         (r.days.length === 0 || r.days.includes(currentDay))
       );
-
-      activeAlarms.forEach(alarm => {
-        const config = configs.find(c => c.id === alarm.configId);
-        if (config) {
-          // Real PWA Push Notification (requires SW)
-          if ('serviceWorker' in navigator && Notification.permission === 'granted') {
-            navigator.serviceWorker.ready.then(registration => {
-              registration.showNotification('ZenInterval Meditation', {
-                body: `Time for your "${config.name}" session`,
-                icon: 'https://cdn-icons-png.flaticon.com/512/2913/2913520.png',
-                vibrate: [200, 100, 200],
-                badge: 'https://cdn-icons-png.flaticon.com/512/2913/2913520.png',
-                tag: 'meditation-reminder',
-                renotify: true,
-                requireInteraction: true
-              } as any);
-            });
-          }
-          setTriggeredAlarm(alarm);
-        }
-      });
+      
+      // If there's an active alarm, show the in-app modal.
+      // The service worker will handle the actual push notification.
+      if (activeAlarms.length > 0 && !triggeredAlarm) {
+         setTriggeredAlarm(activeAlarms[0]);
+      }
     };
 
-    const interval = setInterval(checkAlarms, 10000);
+    const interval = setInterval(checkAlarmsInApp, 10000);
     return () => clearInterval(interval);
-  }, [reminders, configs]);
+  }, [reminders, configs, triggeredAlarm]);
+
 
   const showToast = useCallback((message: string, type: 'success' | 'info' = 'info') => {
     setToast({ message, type });
@@ -90,6 +111,7 @@ const App: React.FC = () => {
       const exists = prev.some(c => c.id === config.id);
       const next = exists ? prev.map(c => c.id === config.id ? config : c) : [config, ...prev];
       storage.saveConfigs(next);
+      sendAlarmsToServiceWorker(); // Reschedule with updated configs
       return next;
     });
     showToast(config.id.startsWith('default') ? 'Routine updated' : 'New routine saved', 'success');
@@ -101,7 +123,7 @@ const App: React.FC = () => {
     setConfigs(prev => {
       const next = prev.filter(c => c.id !== id);
       storage.saveConfigs(next);
-      showToast('Routine deleted');
+      sendAlarmsToServiceWorker(); // Reschedule
       return next;
     });
   };
@@ -130,6 +152,7 @@ const App: React.FC = () => {
       const exists = prev.some(r => r.id === reminder.id);
       const next = exists ? prev.map(r => r.id === reminder.id ? reminder : r) : [...prev, reminder];
       storage.saveReminders(next);
+      sendAlarmsToServiceWorker(); // Reschedule
       return next;
     });
     showToast('Alarm saved', 'success');
@@ -139,6 +162,7 @@ const App: React.FC = () => {
     setReminders(prev => {
       const next = prev.filter(r => r.id !== id);
       storage.saveReminders(next);
+      sendAlarmsToServiceWorker(); // Reschedule
       return next;
     });
     showToast('Alarm removed');
@@ -148,6 +172,7 @@ const App: React.FC = () => {
     setReminders(prev => {
       const next = prev.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r);
       storage.saveReminders(next);
+      sendAlarmsToServiceWorker(); // Reschedule
       return next;
     });
   };
