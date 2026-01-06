@@ -1,4 +1,3 @@
-1
 import { SoundType } from '../types';
 import { AUDIO_ASSETS } from '../constants';
 

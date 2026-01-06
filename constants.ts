@@ -2,13 +2,13 @@
 import { SoundType } from './types';
 
 export const AUDIO_ASSETS = {
-  [SoundType.BELL]: 'https://cdn.pixabay.com/audio/2022/03/24/audio_730248e895.mp3',
-  [SoundType.SINGING_BOWL]: 'https://cdn.pixabay.com/audio/2021/08/09/audio_8816d7c0f2.mp3',
-  [SoundType.GONG]: 'https://cdn.pixabay.com/audio/2022/03/15/audio_27357c9183.mp3',
-  [SoundType.CHIME]: 'https://cdn.pixabay.com/audio/2022/03/24/audio_3203306775.mp3',
-  [SoundType.NATURE]: 'https://cdn.pixabay.com/audio/2022/01/18/audio_6069929d5b.mp3', 
-  [SoundType.RAIN]: 'https://cdn.pixabay.com/audio/2022/03/10/audio_c976f62b66.mp3',
-  [SoundType.WHITE_NOISE]: 'https://cdn.pixabay.com/audio/2021/11/25/audio_91b32e01f9.mp3',
+  [SoundType.BELL]: '/assets/sounds/bell.mp3',
+  [SoundType.SINGING_BOWL]: '/assets/sounds/singing_bowl.mp3',
+  [SoundType.GONG]: '/assets/sounds/gong.mp3',
+  [SoundType.CHIME]: '/assets/sounds/chime.mp3',
+  [SoundType.NATURE]: '/assets/sounds/nature.mp3',
+  [SoundType.RAIN]: '/assets/sounds/rain.mp3',
+  [SoundType.WHITE_NOISE]: '/assets/sounds/white_noise.mp3',
   [SoundType.NONE]: ''
 };
 

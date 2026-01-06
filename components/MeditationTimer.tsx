@@ -30,7 +30,6 @@ const MeditationTimer: React.FC<MeditationTimerProps> = ({ config, onComplete, o
 
   const triggerCompletion = useCallback((isAuto: boolean) => {
     if (timerRef.current) clearInterval(timerRef.current);
-    audioService.stopBackground();
 
     const elapsed = phaseRef.current === 'prep' ? 0 : config.totalDuration - timeLeftRef.current;
     const isFullyCompleted = isAuto || elapsed >= config.totalDuration;

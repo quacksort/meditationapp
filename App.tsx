@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, MeditationConfig, MeditationSession, Reminder } from './types';
 import { storage } from './services/storage';
+import { audioService } from './services/audio';
 import Navigation from './components/Navigation';
 import ConfigCard from './components/ConfigCard';
 import ConfigForm from './components/ConfigForm';
@@ -135,6 +136,7 @@ const App: React.FC = () => {
   };
 
   const handleSessionComplete = (session: MeditationSession) => {
+    audioService.stopBackground();
     storage.saveSession(session);
     setSessions(storage.getSessions());
     setSelectedConfig(null);
@@ -183,7 +185,10 @@ const App: React.FC = () => {
         <MeditationTimer
           config={selectedConfig}
           onComplete={handleSessionComplete}
-          onStop={() => setCurrentView('dashboard')}
+          onStop={() => {
+            audioService.stopBackground();
+            setCurrentView('dashboard');
+          }}
         />
       );
     }
