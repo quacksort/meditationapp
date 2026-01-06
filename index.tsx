@@ -12,8 +12,8 @@ if (!rootElement) {
 // Register Service Worker for PWA features
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Use relative path 'sw.js' instead of '/sw.js' to stay within the sandbox origin
-    navigator.serviceWorker.register('sw.js').then(reg => {
+    // Using './sw.js' ensures the browser treats it as relative to the current directory/origin
+    navigator.serviceWorker.register('./sw.js').then(reg => {
       console.log('SW registered:', reg.scope);
     }).catch(err => {
       console.error('SW registration failed:', err);
@@ -21,14 +21,14 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Global click listener to unlock audio
+// Global click listener to unlock audio capability in the browser
 const unlockAudio = () => {
   audioService.init();
   document.removeEventListener('click', unlockAudio);
   document.removeEventListener('touchstart', unlockAudio);
 };
-document.addEventListener('click', unlockAudio);
-document.addEventListener('touchstart', unlockAudio);
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(

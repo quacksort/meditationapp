@@ -46,7 +46,7 @@ const AlarmManager: React.FC<AlarmManagerProps> = ({ reminders, configs, onSave,
       <div className="space-y-4">
         {reminders.map(alarm => (
           <div key={alarm.id} className="material-card flex items-center justify-between group">
-            <div className="space-y-2 flex-1" onClick={() => handleOpenForm(alarm)}>
+            <div className="space-y-2 flex-1 cursor-pointer" onClick={() => handleOpenForm(alarm)}>
                <div className="flex items-baseline space-x-2">
                  <span className="text-4xl font-black text-[#1A1C1E]">{alarm.time}</span>
                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider truncate max-w-[120px]">
@@ -64,7 +64,11 @@ const AlarmManager: React.FC<AlarmManagerProps> = ({ reminders, configs, onSave,
             
             <div className="flex items-center space-x-4">
                <button
-                 onClick={() => onDelete(alarm.id)}
+                 onClick={() => {
+                   if (confirm('Delete this alarm?')) {
+                     onDelete(alarm.id);
+                   }
+                 }}
                  className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
                >
                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,9 +114,11 @@ const AlarmForm: React.FC<AlarmFormProps> = ({ initialAlarm, configs, onSave, on
     setDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
   };
 
+  const generateId = () => `alarm-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
   const handleSave = () => {
     onSave({
-      id: initialAlarm?.id || crypto.randomUUID(),
+      id: initialAlarm?.id || generateId(),
       time,
       days,
       configId,
@@ -125,7 +131,7 @@ const AlarmForm: React.FC<AlarmFormProps> = ({ initialAlarm, configs, onSave, on
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
       <div className="bg-white w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-8 relative z-10 shadow-2xl">
         <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6 sm:hidden" />
-        <h3 className="text-2xl font-black mb-6">{initialAlarm ? 'Edit Alarm' : 'New Alarm'}</h3>
+        <h3 className="text-2xl font-black mb-6 text-[#1A1C1E]">{initialAlarm ? 'Edit Alarm' : 'New Alarm'}</h3>
         
         <div className="space-y-6">
           <div className="space-y-2">
@@ -140,13 +146,20 @@ const AlarmForm: React.FC<AlarmFormProps> = ({ initialAlarm, configs, onSave, on
 
           <div className="space-y-2">
             <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Routine to Trigger</label>
-            <select
-              value={configId}
-              onChange={(e) => setConfigId(e.target.value)}
-              className="w-full bg-[#F3F4F9] p-4 rounded-2xl font-bold outline-none appearance-none"
-            >
-              {configs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <div className="relative">
+              <select
+                value={configId}
+                onChange={(e) => setConfigId(e.target.value)}
+                className="w-full bg-[#F3F4F9] p-4 rounded-2xl font-bold outline-none appearance-none pr-10 text-[#1A1C1E]"
+              >
+                {configs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">

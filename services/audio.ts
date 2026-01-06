@@ -6,12 +6,19 @@ class AudioService {
   private bgAudio: HTMLAudioElement | null = null;
   private isInitialized = false;
 
+  // Browser requirement: Audio must be initialized via user gesture
   init() {
     if (this.isInitialized) return;
-    const silent = new Audio();
-    silent.play().catch(() => {});
-    this.isInitialized = true;
-    console.log("Audio service initialized");
+    try {
+      // Use a tiny base64 silent wav to "prime" the audio engine
+      const silent = new Audio();
+      silent.src = 'data:audio/wav;base64,UklGRigAAABXQVZFAmZtdCAQAAAAAQABAIAAAIAAAIABAABhZGF0YSAAAACAgICAgIA=';
+      silent.play().catch(() => {});
+      this.isInitialized = true;
+      console.log("Audio service initialized via user gesture");
+    } catch (e) {
+      console.warn("Audio initialization failed", e);
+    }
   }
 
   private createAudio(url: string): HTMLAudioElement {
