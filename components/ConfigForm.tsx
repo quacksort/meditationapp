@@ -132,7 +132,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSave, onCancel
         <div className="space-y-2">
           <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Prep Countdown (sec)</label>
           <div className="flex space-x-2">
-            {[5, 10, 20, 30].map(s => (
+            {[0, 5, 10, 20, 30].map(s => (
               <button
                 key={s}
                 type="button"
