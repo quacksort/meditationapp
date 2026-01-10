@@ -2,13 +2,13 @@
 import { SoundType } from './types';
 
 export const AUDIO_ASSETS = {
-  [SoundType.BELL]: '/assets/sounds/bell.mp3',
-  [SoundType.SINGING_BOWL]: '/assets/sounds/singing_bowl.mp3',
-  [SoundType.GONG]: '/assets/sounds/gong.mp3',
-  [SoundType.CHIME]: '/assets/sounds/chime.mp3',
-  [SoundType.NATURE]: '/assets/sounds/nature.mp3',
-  [SoundType.RAIN]: '/assets/sounds/rain.mp3',
-  [SoundType.WHITE_NOISE]: '/assets/sounds/white_noise.mp3',
+  [SoundType.BELL]: 'assets/sounds/bell.mp3',
+  [SoundType.SINGING_BOWL]: 'assets/sounds/singing_bowl.mp3',
+  [SoundType.GONG]: 'assets/sounds/gong.mp3',
+  [SoundType.CHIME]: 'assets/sounds/chime.mp3',
+  [SoundType.NATURE]: 'assets/sounds/nature.mp3',
+  [SoundType.RAIN]: 'assets/sounds/rain.mp3',
+  [SoundType.WHITE_NOISE]: 'assets/sounds/white_noise.mp3',
   [SoundType.NONE]: ''
 };
 

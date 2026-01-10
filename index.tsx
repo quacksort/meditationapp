@@ -12,8 +12,9 @@ if (!rootElement) {
 // Register Service Worker for PWA features
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Standard relative path for SW registration in sandboxed environments
-    navigator.serviceWorker.register('sw.js')
+    // Use `import.meta.env.BASE_URL` to create the correct path to the SW file
+    const swUrl = `${import.meta.env.BASE_URL}sw.js`;
+    navigator.serviceWorker.register(swUrl)
       .then(reg => {
         console.log('ZenInterval: Service Worker registered', reg.scope);
       })
