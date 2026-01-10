@@ -1,4 +1,4 @@
-// A unique name for the cache
+// Service Worker
 const CACHE_NAME = 'meditation-app-cache-v1';
 const BASE_URL = '/meditationapp/';
 
