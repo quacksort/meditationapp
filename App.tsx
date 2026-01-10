@@ -39,6 +39,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    audioService.init();
     setConfigs(storage.getConfigs());
     setSessions(storage.getSessions());
     setReminders(storage.getReminders());
@@ -186,7 +187,6 @@ const App: React.FC = () => {
           config={selectedConfig}
           onComplete={handleSessionComplete}
           onStop={() => {
-            audioService.stopBackground();
             setCurrentView('dashboard');
           }}
         />

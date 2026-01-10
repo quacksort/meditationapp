@@ -18,6 +18,7 @@ const MeditationTimer: React.FC<MeditationTimerProps> = ({ config, onComplete, o
   const timerRef = useRef<number | null>(null);
   const timeLeftRef = useRef(config.prepDuration);
   const phaseRef = useRef<'prep' | 'active' | 'finished'>('prep');
+  const audioStartedRef = useRef(false);
 
   // Keep refs in sync with state for immediate access in completion logic
   useEffect(() => {
@@ -62,9 +63,12 @@ const MeditationTimer: React.FC<MeditationTimerProps> = ({ config, onComplete, o
       
       if (next < 0) {
         if (phaseRef.current === 'prep') {
-          setPhase('active');
-          audioService.playEffect(config.startSound);
-          audioService.playBackground(config.backgroundSound);
+          if (!audioStartedRef.current) {
+            setPhase('active');
+            audioService.playEffect(config.startSound);
+            audioService.playBackground(config.backgroundSound);
+            audioStartedRef.current = true;
+          }
           return config.totalDuration;
         } else if (phaseRef.current === 'active') {
           setPhase('finished');
