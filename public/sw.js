@@ -1,11 +1,18 @@
 // A unique name for the cache
 const CACHE_NAME = 'meditation-app-cache-v1';
+const BASE_URL = '/meditationapp/';
 
 // An array of assets to cache
 const urlsToCache = [
-  '/',
-  '/index.html',
-  // Add other assets like your main JS bundle, CSS, and images here
+  BASE_URL,
+  `${BASE_URL}index.html`,
+  `${BASE_URL}assets/sounds/bell.mp3`,
+  `${BASE_URL}assets/sounds/chime.mp3`,
+  `${BASE_URL}assets/sounds/gong.mp3`,
+  `${BASE_URL}assets/sounds/nature.mp3`,
+  `${BASE_URL}assets/sounds/rain.mp3`,
+  `${BASE_URL}assets/sounds/singing_bowl.mp3`,
+  `${BASE_URL}assets/sounds/white_noise.mp3`
 ];
 
 self.addEventListener('install', (event) => {

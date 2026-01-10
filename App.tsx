@@ -25,6 +25,18 @@ const App: React.FC = () => {
   
   const lastCheckedMinute = useRef<string>('');
 
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+          console.log('SW registered: ', registration);
+        }).catch(registrationError => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
+  }, []);
+
   // Function to send data to the service worker
   const sendAlarmsToServiceWorker = useCallback(() => {
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
